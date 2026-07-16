@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Direct Downloader</title>
+    <title>REPRODUCTOR M3U PRO</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary: #dc2626;
+            --primary: #3b82f6;
+            --secondary: #ef4444;
             --bg: #0f172a;
             --card: #1e293b;
             --text: #f1f5f9;
+            --accent: #8b5cf6;
         }
 
         body {
@@ -18,225 +20,226 @@
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1000px;
             width: 100%;
             background: var(--card);
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-        }
-
-        h1 {
-            text-align: center;
-            color: #ef4444;
-            font-size: 2rem;
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #94a3b8;
-            margin-bottom: 30px;
-            font-size: 0.9rem;
-        }
-
-        .upload-area {
-            border: 2px dashed #475569;
-            padding: 40px;
-            text-align: center;
+            padding: 20px;
             border-radius: 12px;
-            cursor: pointer;
-            background: #0f172a;
-            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .header {
+            text-align: center;
             margin-bottom: 20px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
         }
 
-        .upload-area:hover {
-            border-color: var(--primary);
-            background: #1e293b;
-        }
+        .header h1 { color: var(--primary); margin: 0; font-size: 1.8rem; }
 
-        #fileInput { display: none; }
-
-        .btn-select {
-            background-color: var(--primary);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            border: none;
-            font-weight: 700;
-            cursor: pointer;
-            margin-top: 15px;
-        }
-
-        .video-list {
-            margin-top: 20px;
-            display: grid;
-            gap: 12px;
-        }
-
-        .video-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background: #334155;
-            border-radius: 10px;
-            border: 1px solid #475569;
-            transition: transform 0.2s;
-        }
-
-        .video-item:hover {
-            transform: translateX(5px);
-            border-color: var(--primary);
-        }
-
-        .video-info {
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .video-name {
-            font-weight: 600;
-            display: block;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-            overflow: hidden;
-            font-size: 1rem;
-        }
-
-        .video-ext {
-            font-size: 0.75rem;
-            background: #ef4444;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: 8px;
-            text-transform: uppercase;
-        }
-
-        .actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-download {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: bold;
-            text-decoration: none;
-        }
-
-        .btn-download:hover {
-            background: #059669;
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
-        }
-
-        .instructions {
-            background: #450a0a;
-            border: 1px solid #ef4444;
+        .setup-section {
+            background: #0f172a;
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 20px;
-            font-size: 0.85rem;
-            color: #fecaca;
+            display: grid;
+            gap: 10px;
+        }
+
+        input, select, button {
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            background: #1e293b;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .btn-group { display: flex; gap: 10px; }
+        .btn-primary { background: var(--primary); cursor: pointer; border: none; font-weight: bold; flex: 1; }
+        .btn-secondary { background: var(--accent); cursor: pointer; border: none; font-weight: bold; }
+
+        .list-selector {
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .channel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .channel-item {
+            background: #334155;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-left: 4px solid var(--primary);
+            transition: transform 0.2s;
+        }
+
+        .channel-item:focus {
+            outline: 3px solid white;
+            transform: scale(1.02);
+            background: #475569;
+        }
+
+        .channel-name { font-weight: bold; font-size: 1.1rem; }
+
+        .actions { display: flex; gap: 8px; }
+        .btn-play { background: #10b981; flex: 2; border: none; border-radius: 4px; color: white; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .btn-dl { background: #64748b; flex: 1; border: none; border-radius: 4px; color: white; padding: 8px; cursor: pointer; }
+
+        @media (max-width: 600px) {
+            .channel-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1><i class="fas fa-bolt"></i> Descargador M3U</h1>
-    <p class="subtitle">Herramienta para Android y Fire TV</p>
-
-    <div class="instructions">
-        <i class="fas fa-info-circle"></i> <b>Uso:</b> Carga un archivo .m3u para listar los videos y descargarlos directamente a tu dispositivo.
+    <div class="header">
+        <h1><i class="fas fa-play-circle"></i> REPRODUCTOR M3U</h1>
     </div>
 
-    <div class="upload-area" id="dropArea">
-        <i class="fas fa-file-alt fa-3x" style="color: #64748b"></i>
-        <p>Selecciona tu lista M3U</p>
-        <button class="btn-select" onclick="document.getElementById('fileInput').click()">CARGAR LISTA</button>
-        <input type="file" id="fileInput" accept=".m3u,.m3u8">
+    <div class="setup-section">
+        <input type="text" id="listName" placeholder="Nombre de la lista (ej: Películas)">
+        <div class="btn-group">
+            <button class="btn-primary" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-file-upload"></i> CARGAR ARCHIVO M3U
+            </button>
+            <input type="file" id="fileInput" accept=".m3u,.m3u8" style="display:none">
+        </div>
     </div>
 
-    <div id="videoList" class="video-list"></div>
+    <div class="list-selector">
+        <label><i class="fas fa-list"></i> Tus Listas Guardadas:</label>
+        <div class="btn-group">
+            <select id="savedListsSelect" style="flex:1"></select>
+            <button class="btn-secondary" onclick="loadSelectedList()">VER LISTA</button>
+            <button style="background:#ef4444; border:none;" onclick="deleteList()"><i class="fas fa-trash"></i></button>
+        </div>
+    </div>
+
+    <div id="channelList" class="channel-grid"></div>
 </div>
 
 <script>
     const fileInput = document.getElementById('fileInput');
-    const videoList = document.getElementById('videoList');
-    const videoExtensions = ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.ts', '.m4v'];
+    const listNameInput = document.getElementById('listName');
+    const savedListsSelect = document.getElementById('savedListsSelect');
+    const channelList = document.getElementById('channelList');
+
+    // Cargar listas al iniciar
+    window.onload = refreshSavedLists;
 
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
+        const name = listNameInput.value || file.name;
         const reader = new FileReader();
-        reader.onload = (e) => parseM3U(e.target.result);
+        reader.onload = (e) => {
+            saveToLocal(name, e.target.result);
+            parseAndRender(e.target.result);
+        };
         reader.readAsText(file);
     });
 
-    function parseM3U(content) {
+    function saveToLocal(name, content) {
+        let lists = JSON.parse(localStorage.getItem('m3u_lists') || '{}');
+        lists[name] = content;
+        localStorage.setItem('m3u_lists', JSON.stringify(lists));
+        refreshSavedLists();
+        alert('Lista "' + name + '" guardada correctamente.');
+    }
+
+    function refreshSavedLists() {
+        let lists = JSON.parse(localStorage.getItem('m3u_lists') || '{}');
+        savedListsSelect.innerHTML = '';
+        for (let name in lists) {
+            let opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            savedListsSelect.appendChild(opt);
+        }
+    }
+
+    function loadSelectedList() {
+        let lists = JSON.parse(localStorage.getItem('m3u_lists') || '{}');
+        let selected = savedListsSelect.value;
+        if (selected && lists[selected]) {
+            parseAndRender(lists[selected]);
+        }
+    }
+
+    function deleteList() {
+        let selected = savedListsSelect.value;
+        if (selected && confirm('¿Borrar lista?')) {
+            let lists = JSON.parse(localStorage.getItem('m3u_lists') || '{}');
+            delete lists[selected];
+            localStorage.setItem('m3u_lists', JSON.stringify(lists));
+            refreshSavedLists();
+            channelList.innerHTML = '';
+        }
+    }
+
+    function parseAndRender(content) {
         const lines = content.split('\n');
-        const videos = [];
-        let currentName = "Video_Descargado";
+        const channels = [];
+        let currentName = "Canal desconocido";
 
         lines.forEach(line => {
             line = line.trim();
             if (line.startsWith('#EXTINF')) {
                 const parts = line.split(',');
-                currentName = parts[parts.length - 1].trim() || "Video_Descargado";
+                currentName = parts[parts.length - 1].trim() || "Canal";
             } else if (line.length > 0 && !line.startsWith('#')) {
-                const url = line;
-                const extension = videoExtensions.find(ext => url.toLowerCase().includes(ext));
-
-                if (extension) {
-                    videos.push({ name: currentName, url: url, ext: extension });
-                }
-                currentName = "Video_Descargado";
+                channels.push({ name: currentName, url: line });
+                currentName = "Canal";
             }
         });
 
-        renderList(videos);
+        renderChannels(channels);
     }
 
-    function renderList(videos) {
-        videoList.innerHTML = '';
-        if (videos.length === 0) {
-            videoList.innerHTML = '<p style="text-align:center; color:#94a3b8;">No se detectaron videos.</p>';
-            return;
-        }
-
-        videos.forEach(video => {
-            const cleanName = video.name.replace(/[<>:"/\\|?*]/g, '') + video.ext;
-            const item = document.createElement('div');
-            item.className = 'video-item';
-            item.innerHTML = `
-                <div class="video-info">
-                    <span class="video-name">${video.name}</span>
-                </div>
+    function renderChannels(channels) {
+        channelList.innerHTML = '';
+        channels.forEach(ch => {
+            const div = document.createElement('div');
+            div.className = 'channel-item';
+            div.tabIndex = 0; // Habilita navegación con mando
+            div.innerHTML = `
+                <span class="channel-name">${ch.name}</span>
                 <div class="actions">
-                    <button onclick="window.location.href='${video.url}'" class="btn-download">
-                        <i class="fas fa-download"></i> DESCARGAR
+                    <button class="btn-play" onclick="playVideo('${ch.url}')">
+                        <i class="fas fa-play"></i> REPRODUCIR
+                    </button>
+                    <button class="btn-dl" onclick="window.location.href='${ch.url}'">
+                        <i class="fas fa-download"></i>
                     </button>
                 </div>
             `;
-            videoList.appendChild(item);
+            channelList.appendChild(div);
         });
+    }
+
+    function playVideo(url) {
+        // Al navegar a una URL de video, la lógica Java la interceptará para abrir el reproductor
+        window.location.href = "play://" + url;
     }
 </script>
 

@@ -14,7 +14,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.view.KeyEvent;
-import android.view.View;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
@@ -34,23 +33,38 @@ public class MainActivity extends Activity {
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
         webSettings.setAllowFileAccess(true);
-        webSettings.setAllowContentAccess(true);
+        webSettings.setDatabaseEnabled(true);
+        webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         
         // Optimización para TV y Móvil
         webSettings.setUseWideViewPort(true);
         webSettings.setLoadWithOverviewMode(true);
 
-        myWebView.setWebViewClient(new WebViewClient());
+        myWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                // --- Lógica de REPRODUCCIÓN ---
+                if (url.startsWith("play://")) {
+                    String videoUrl = url.replace("play://", "");
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setDataAndType(Uri.parse(videoUrl), "video/*");
+                    
+                    try {
+                        startActivity(intent); // Abre VLC, MX Player o el nativo
+                    } catch (Exception e) {
+                        Toast.makeText(MainActivity.this, "No tienes un reproductor de video compatible instalado", Toast.LENGTH_SHORT).show();
+                    }
+                    return true;
+                }
+                return false;
+            }
+        });
 
-        // --- Lógica para seleccionar archivos (M3U) ---
         myWebView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
-                if (uploadMessage != null) {
-                    uploadMessage.onReceiveValue(null);
-                }
+                if (uploadMessage != null) uploadMessage.onReceiveValue(null);
                 uploadMessage = filePathCallback;
-
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.setType("*/*");
@@ -59,31 +73,19 @@ public class MainActivity extends Activity {
             }
         });
 
-        // --- Lógica para descargar videos ---
         myWebView.setDownloadListener(new DownloadListener() {
             @Override
             public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
                 DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
                 request.setMimeType(mimetype);
-                
-                String cookies = CookieManager.getInstance().getCookie(url);
-                request.addRequestHeader("cookie", cookies);
-                request.addRequestHeader("User-Agent", userAgent);
-                
-                request.setDescription("Descargando video...");
-                request.setTitle(Uri.parse(url).getLastPathSegment());
-                request.allowScanningByMediaScanner();
                 request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
                 request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, Uri.parse(url).getLastPathSegment());
-                
                 DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
                 dm.enqueue(request);
-                
-                Toast.makeText(getApplicationContext(), "Descarga iniciada...", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), "Descarga iniciada...", Toast.LENGTH_SHORT).show();
             }
         });
 
-        // Cargamos el archivo local que acabamos de crear
         myWebView.loadUrl("file:///android_asset/index.html"); 
     }
 
@@ -92,11 +94,7 @@ public class MainActivity extends Activity {
         if (requestCode == FILECHOOSER_RESULTCODE) {
             if (uploadMessage == null) return;
             Uri result = intent == null || resultCode != RESULT_OK ? null : intent.getData();
-            if (result != null) {
-                uploadMessage.onReceiveValue(new Uri[]{result});
-            } else {
-                uploadMessage.onReceiveValue(null);
-            }
+            uploadMessage.onReceiveValue(result != null ? new Uri[]{result} : null);
             uploadMessage = null;
         }
     }
