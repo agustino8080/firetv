@@ -10,7 +10,7 @@
     <application
         android:allowBackup="true"
         android:label="REPRODUCTOR M3U"
-        android:icon="@android:drawable/ic_media_play"
+        android:icon="@mipmap/ic_launcher"
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
 
         <activity

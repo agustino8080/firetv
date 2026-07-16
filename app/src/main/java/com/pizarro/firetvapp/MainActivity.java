@@ -1,20 +1,16 @@
 package com.pizarro.firetvapp;
 
 import android.app.Activity;
-import android.app.DownloadManager;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
-import android.webkit.CookieManager;
-import android.webkit.DownloadListener;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.view.KeyEvent;
 import android.widget.Toast;
+import java.io.File;
 
 public class MainActivity extends Activity {
 
@@ -32,27 +28,29 @@ public class MainActivity extends Activity {
         WebSettings webSettings = myWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
-        webSettings.setAllowFileAccess(true);
-        webSettings.setDatabaseEnabled(true);
-        webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         
-        // Optimización para TV y Móvil
+        // Habilitar persistencia de datos (LocalStorage)
+        String databasePath = this.getApplicationContext().getDir("database", MODE_PRIVATE).getPath();
+        webSettings.setDatabaseEnabled(true);
+        
+        webSettings.setAllowFileAccess(true);
+        webSettings.setAllowContentAccess(true);
+        
+        // Optimización visual
         webSettings.setUseWideViewPort(true);
         webSettings.setLoadWithOverviewMode(true);
 
         myWebView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                // --- Lógica de REPRODUCCIÓN ---
                 if (url.startsWith("play://")) {
                     String videoUrl = url.replace("play://", "");
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     intent.setDataAndType(Uri.parse(videoUrl), "video/*");
-                    
                     try {
-                        startActivity(intent); // Abre VLC, MX Player o el nativo
+                        startActivity(intent);
                     } catch (Exception e) {
-                        Toast.makeText(MainActivity.this, "No tienes un reproductor de video compatible instalado", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "Instala VLC para reproducir este contenido", Toast.LENGTH_LONG).show();
                     }
                     return true;
                 }
@@ -73,19 +71,6 @@ public class MainActivity extends Activity {
             }
         });
 
-        myWebView.setDownloadListener(new DownloadListener() {
-            @Override
-            public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
-                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-                request.setMimeType(mimetype);
-                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, Uri.parse(url).getLastPathSegment());
-                DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-                dm.enqueue(request);
-                Toast.makeText(getApplicationContext(), "Descarga iniciada...", Toast.LENGTH_SHORT).show();
-            }
-        });
-
         myWebView.loadUrl("file:///android_asset/index.html"); 
     }
 
@@ -97,14 +82,5 @@ public class MainActivity extends Activity {
             uploadMessage.onReceiveValue(result != null ? new Uri[]{result} : null);
             uploadMessage = null;
         }
-    }
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if ((keyCode == KeyEvent.KEYCODE_BACK) && myWebView.canGoBack()) {
-            myWebView.goBack();
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
     }
 }

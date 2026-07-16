@@ -3,243 +3,272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPRODUCTOR M3U PRO</title>
+    <title>REPRODUCTOR M3U</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary: #3b82f6;
-            --secondary: #ef4444;
-            --bg: #0f172a;
-            --card: #1e293b;
-            --text: #f1f5f9;
-            --accent: #8b5cf6;
+            --primary: #00f2ff; /* Cian vibrante */
+            --secondary: #7000ff; /* Morado eléctrico */
+            --bg: #050a14;
+            --card: #101827;
+            --text: #ffffff;
+            --accent: #ff007a; /* Rosa neón */
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--bg);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: radial-gradient(circle at top, #1e1b4b, var(--bg));
             color: var(--text);
             margin: 0;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            padding: 15px;
+            min-height: 100vh;
         }
 
         .container {
-            max-width: 1000px;
-            width: 100%;
-            background: var(--card);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            max-width: 900px;
+            margin: 0 auto;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--primary);
-            padding-bottom: 10px;
+            padding: 20px;
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
         }
 
-        .header h1 { color: var(--primary); margin: 0; font-size: 1.8rem; }
-
-        .setup-section {
-            background: #0f172a;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: grid;
-            gap: 10px;
+        .header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
 
-        input, select, button {
+        .section-box {
+            background: var(--card);
+            border: 1px solid #1e293b;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+        input, select {
+            width: 100%;
             padding: 12px;
-            border-radius: 6px;
-            border: 1px solid #475569;
-            background: #1e293b;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #0f172a;
             color: white;
-            font-size: 1rem;
+            box-sizing: border-box;
         }
 
-        .btn-group { display: flex; gap: 10px; }
-        .btn-primary { background: var(--primary); cursor: pointer; border: none; font-weight: bold; flex: 1; }
-        .btn-secondary { background: var(--accent); cursor: pointer; border: none; font-weight: bold; }
-
-        .list-selector {
-            margin: 15px 0;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
+        .btn {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-transform: uppercase;
         }
+
+        .btn-main { background: var(--primary); color: #000; width: 100%; }
+        .btn-load { background: var(--secondary); color: white; flex: 2; }
+        .btn-del { background: var(--accent); color: white; flex: 1; }
+
+        .flex-row { display: flex; gap: 10px; margin-top: 10px; }
 
         .channel-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
+            gap: 15px;
+            margin-top: 20px;
         }
 
-        .channel-item {
-            background: #334155;
+        .channel-card {
+            background: #1e293b;
             padding: 15px;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            border-left: 4px solid var(--primary);
+            border-radius: 12px;
+            border-bottom: 4px solid var(--primary);
             transition: transform 0.2s;
         }
 
-        .channel-item:focus {
-            outline: 3px solid white;
-            transform: scale(1.02);
-            background: #475569;
+        .channel-card:focus {
+            outline: 4px solid white;
+            transform: scale(1.03);
+            background: #334155;
         }
 
-        .channel-name { font-weight: bold; font-size: 1.1rem; }
-
-        .actions { display: flex; gap: 8px; }
-        .btn-play { background: #10b981; flex: 2; border: none; border-radius: 4px; color: white; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
-        .btn-dl { background: #64748b; flex: 1; border: none; border-radius: 4px; color: white; padding: 8px; cursor: pointer; }
-
-        @media (max-width: 600px) {
-            .channel-grid { grid-template-columns: 1fr; }
+        .channel-name {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            color: var(--primary);
         }
+
+        .play-btn {
+            background: #10b981;
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            width: 100%;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .empty-msg { text-align: center; color: #64748b; padding: 40px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1><i class="fas fa-play-circle"></i> REPRODUCTOR M3U</h1>
+        <h1><i class="fas fa-bolt"></i> REPRODUCTOR M3U</h1>
     </div>
 
-    <div class="setup-section">
-        <input type="text" id="listName" placeholder="Nombre de la lista (ej: Películas)">
-        <div class="btn-group">
-            <button class="btn-primary" onclick="document.getElementById('fileInput').click()">
-                <i class="fas fa-file-upload"></i> CARGAR ARCHIVO M3U
-            </button>
-            <input type="file" id="fileInput" accept=".m3u,.m3u8" style="display:none">
+    <!-- SECCIÓN: CARGA -->
+    <div class="section-box">
+        <label><i class="fas fa-plus-circle"></i> Nueva Lista:</label>
+        <input type="text" id="listName" placeholder="Nombre de la lista (ej: Mi TV)">
+        <button class="btn btn-main" onclick="document.getElementById('fileInput').click()">
+            <i class="fas fa-file-m3u"></i> CARGAR Y GUARDAR ARCHIVO
+        </button>
+        <input type="file" id="fileInput" accept=".m3u,.m3u8" style="display:none">
+    </div>
+
+    <!-- SECCIÓN: SELECTOR -->
+    <div class="section-box">
+        <label><i class="fas fa-layer-group"></i> Mis Listas Guardadas:</label>
+        <select id="listsDropdown">
+            <option value="">-- Selecciona una lista --</option>
+        </select>
+        <div class="flex-row">
+            <button class="btn btn-load" onclick="loadSelected()"><i class="fas fa-eye"></i> Visualizar</button>
+            <button class="btn btn-del" onclick="deleteCurrent()"><i class="fas fa-trash"></i></button>
         </div>
     </div>
 
-    <div class="list-selector">
-        <label><i class="fas fa-list"></i> Tus Listas Guardadas:</label>
-        <div class="btn-group">
-            <select id="savedListsSelect" style="flex:1"></select>
-            <button class="btn-secondary" onclick="loadSelectedList()">VER LISTA</button>
-            <button style="background:#ef4444; border:none;" onclick="deleteList()"><i class="fas fa-trash"></i></button>
-        </div>
+    <div id="contentArea" class="channel-grid">
+        <div class="empty-msg">Carga un archivo M3U para empezar.</div>
     </div>
-
-    <div id="channelList" class="channel-grid"></div>
 </div>
 
 <script>
-    const fileInput = document.getElementById('fileInput');
-    const listNameInput = document.getElementById('listName');
-    const savedListsSelect = document.getElementById('savedListsSelect');
-    const channelList = document.getElementById('channelList');
+    const STORAGE_KEY = 'm3u_player_data';
 
-    // Cargar listas al iniciar
-    window.onload = refreshSavedLists;
+    // Inicializar
+    window.onload = updateDropdown;
 
-    fileInput.addEventListener('change', function(e) {
+    document.getElementById('fileInput').onchange = function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
-        const name = listNameInput.value || file.name;
+        const name = document.getElementById('listName').value.trim() || file.name;
         const reader = new FileReader();
-        reader.onload = (e) => {
-            saveToLocal(name, e.target.result);
-            parseAndRender(e.target.result);
+        reader.onload = (event) => {
+            saveData(name, event.target.result);
+            processM3U(event.target.result);
         };
         reader.readAsText(file);
-    });
+    };
 
-    function saveToLocal(name, content) {
-        let lists = JSON.parse(localStorage.getItem('m3u_lists') || '{}');
-        lists[name] = content;
-        localStorage.setItem('m3u_lists', JSON.stringify(lists));
-        refreshSavedLists();
-        alert('Lista "' + name + '" guardada correctamente.');
+    function saveData(name, content) {
+        try {
+            let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            data[name] = content;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            updateDropdown();
+            alert('¡Lista "' + name + '" guardada con éxito!');
+        } catch(e) {
+            alert('Error al guardar. Puede que la lista sea demasiado grande.');
+        }
     }
 
-    function refreshSavedLists() {
-        let lists = JSON.parse(localStorage.getItem('m3u_lists') || '{}');
-        savedListsSelect.innerHTML = '';
-        for (let name in lists) {
+    function updateDropdown() {
+        const dropdown = document.getElementById('listsDropdown');
+        const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+
+        dropdown.innerHTML = '<option value="">-- Selecciona una lista --</option>';
+        for (let name in data) {
             let opt = document.createElement('option');
             opt.value = name;
             opt.textContent = name;
-            savedListsSelect.appendChild(opt);
+            dropdown.appendChild(opt);
         }
     }
 
-    function loadSelectedList() {
-        let lists = JSON.parse(localStorage.getItem('m3u_lists') || '{}');
-        let selected = savedListsSelect.value;
-        if (selected && lists[selected]) {
-            parseAndRender(lists[selected]);
+    function loadSelected() {
+        const val = document.getElementById('listsDropdown').value;
+        const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        if (val && data[val]) {
+            processM3U(data[val]);
         }
     }
 
-    function deleteList() {
-        let selected = savedListsSelect.value;
-        if (selected && confirm('¿Borrar lista?')) {
-            let lists = JSON.parse(localStorage.getItem('m3u_lists') || '{}');
-            delete lists[selected];
-            localStorage.setItem('m3u_lists', JSON.stringify(lists));
-            refreshSavedLists();
-            channelList.innerHTML = '';
+    function deleteCurrent() {
+        const val = document.getElementById('listsDropdown').value;
+        if (!val) return;
+        if (confirm('¿Eliminar la lista "' + val + '"?')) {
+            let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            delete data[val];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            updateDropdown();
+            document.getElementById('contentArea').innerHTML = '<div class="empty-msg">Lista eliminada.</div>';
         }
     }
 
-    function parseAndRender(content) {
-        const lines = content.split('\n');
+    function processM3U(content) {
+        const lines = content.split(/\r?\n/);
         const channels = [];
-        let currentName = "Canal desconocido";
+        let currentInfo = "";
 
-        lines.forEach(line => {
-            line = line.trim();
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i].trim();
             if (line.startsWith('#EXTINF')) {
-                const parts = line.split(',');
-                currentName = parts[parts.length - 1].trim() || "Canal";
-            } else if (line.length > 0 && !line.startsWith('#')) {
-                channels.push({ name: currentName, url: line });
-                currentName = "Canal";
+                currentInfo = line.split(',').pop();
+            } else if (line.length > 5 && !line.startsWith('#')) {
+                channels.push({
+                    name: currentInfo || "Canal sin nombre",
+                    url: line
+                });
+                currentInfo = "";
             }
-        });
+        }
 
-        renderChannels(channels);
+        render(channels);
     }
 
-    function renderChannels(channels) {
-        channelList.innerHTML = '';
-        channels.forEach(ch => {
-            const div = document.createElement('div');
-            div.className = 'channel-item';
-            div.tabIndex = 0; // Habilita navegación con mando
-            div.innerHTML = `
-                <span class="channel-name">${ch.name}</span>
-                <div class="actions">
-                    <button class="btn-play" onclick="playVideo('${ch.url}')">
-                        <i class="fas fa-play"></i> REPRODUCIR
-                    </button>
-                    <button class="btn-dl" onclick="window.location.href='${ch.url}'">
-                        <i class="fas fa-download"></i>
-                    </button>
-                </div>
+    function render(channels) {
+        const area = document.getElementById('contentArea');
+        area.innerHTML = '';
+
+        if (channels.length === 0) {
+            area.innerHTML = '<div class="empty-msg">No se encontraron enlaces de video válidos.</div>';
+            return;
+        }
+
+        channels.forEach(c => {
+            const card = document.createElement('div');
+            card.className = 'channel-card';
+            card.tabIndex = 0;
+            card.innerHTML = `
+                <span class="channel-name">${c.name}</span>
+                <button class="play-btn" onclick="window.location.href='play://${c.url}'">
+                    <i class="fas fa-play"></i> REPRODUCIR
+                </button>
             `;
-            channelList.appendChild(div);
+            area.appendChild(card);
         });
-    }
-
-    function playVideo(url) {
-        // Al navegar a una URL de video, la lógica Java la interceptará para abrir el reproductor
-        window.location.href = "play://" + url;
     }
 </script>
 
