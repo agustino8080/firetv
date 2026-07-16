@@ -1,24 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.pizarro.firetvapp">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Indica que la app NO requiere obligatoriamente Leanback (así permite móviles) -->
     <uses-feature android:name="android.software.leanback" android:required="false" />
+    <!-- Indica que la app NO requiere obligatoriamente pantalla táctil (así permite TV) -->
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
-        android:label="Mi Web en FireTV"
+        android:label="Mi Web Multiplataforma"
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:screenOrientation="landscape">
+            android:screenOrientation="sensor"> <!-- "sensor" permite rotar en móvil y fijo en TV -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+
+                <!-- Icono en el menú normal de Android (Móvil/Tablet) -->
                 <category android:name="android.intent.category.LAUNCHER" />
+
+                <!-- Icono en el menú de Android TV / Fire TV -->
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
     </application>
