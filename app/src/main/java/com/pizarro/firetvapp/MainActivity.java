@@ -10,7 +10,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
-import java.io.File;
 
 public class MainActivity extends Activity {
 
@@ -29,28 +28,38 @@ public class MainActivity extends Activity {
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
         
-        // Habilitar persistencia de datos (LocalStorage)
-        String databasePath = this.getApplicationContext().getDir("database", MODE_PRIVATE).getPath();
+        // Persistencia para que no se borren las listas al cerrar
         webSettings.setDatabaseEnabled(true);
+        webSettings.setDomStorageEnabled(true);
         
         webSettings.setAllowFileAccess(true);
         webSettings.setAllowContentAccess(true);
-        
-        // Optimización visual
         webSettings.setUseWideViewPort(true);
         webSettings.setLoadWithOverviewMode(true);
 
         myWebView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (url.startsWith("play://")) {
-                    String videoUrl = url.replace("play://", "");
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setDataAndType(Uri.parse(videoUrl), "video/*");
+                // --- Lógica de REPRODUCCIÓN MEJORADA ---
+                if (url.startsWith("vlc://")) {
+                    String cleanUrl = url.replace("vlc://", "");
+                    
+                    // Intentamos abrir específicamente con VLC primero
+                    Intent vlcIntent = new Intent(Intent.ACTION_VIEW);
+                    vlcIntent.setDataAndType(Uri.parse(cleanUrl), "video/*");
+                    vlcIntent.setPackage("org.videolan.vlc"); // Paquete oficial de VLC
+
                     try {
-                        startActivity(intent);
+                        startActivity(vlcIntent);
                     } catch (Exception e) {
-                        Toast.makeText(MainActivity.this, "Instala VLC para reproducir este contenido", Toast.LENGTH_LONG).show();
+                        // Si falla VLC, probamos con cualquier reproductor disponible
+                        Intent genericIntent = new Intent(Intent.ACTION_VIEW);
+                        genericIntent.setDataAndType(Uri.parse(cleanUrl), "video/*");
+                        try {
+                            startActivity(Intent.createChooser(genericIntent, "Elige un reproductor de video"));
+                        } catch (Exception ex) {
+                            Toast.makeText(MainActivity.this, "No tienes ningún reproductor instalado", Toast.LENGTH_LONG).show();
+                        }
                     }
                     return true;
                 }

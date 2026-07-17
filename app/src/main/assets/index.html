@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPRODUCTOR M3U</title>
+    <title>REPRODUCTOR M3U PRO</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary: #00f2ff; /* Cian vibrante */
-            --secondary: #7000ff; /* Morado eléctrico */
+            --primary: #00f2ff;
+            --secondary: #7000ff;
             --bg: #050a14;
             --card: #101827;
             --text: #ffffff;
-            --accent: #ff007a; /* Rosa neón */
+            --accent: #ff007a;
+            --success: #10b981;
         }
 
         body {
@@ -24,236 +25,263 @@
             min-height: 100vh;
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
+        .container { max-width: 900px; margin: 0 auto; }
 
         .header {
             text-align: center;
-            padding: 20px;
+            padding: 15px;
             background: linear-gradient(90deg, var(--secondary), var(--primary));
-            border-radius: 15px;
-            margin-bottom: 25px;
-            box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
         }
 
-        .header h1 {
-            margin: 0;
-            font-size: 2.2rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
+        .header h1 { margin: 0; font-size: 1.8rem; text-transform: uppercase; letter-spacing: 1px; }
 
         .section-box {
             background: var(--card);
             border: 1px solid #1e293b;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
         }
+
+        label { font-weight: bold; color: var(--primary); display: block; margin-bottom: 5px; font-size: 0.9rem; }
 
         input, select {
             width: 100%;
             padding: 12px;
-            margin: 10px 0;
+            margin: 5px 0 10px 0;
             border-radius: 8px;
             border: 1px solid #334155;
             background: #0f172a;
             color: white;
             box-sizing: border-box;
+            font-size: 1rem;
         }
 
         .btn {
-            padding: 12px 20px;
+            padding: 12px;
             border-radius: 8px;
             border: none;
             font-weight: 800;
             cursor: pointer;
-            transition: all 0.2s;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             text-transform: uppercase;
+            transition: transform 0.1s;
         }
+        .btn:active { transform: scale(0.98); }
 
         .btn-main { background: var(--primary); color: #000; width: 100%; }
-        .btn-load { background: var(--secondary); color: white; flex: 2; }
+        .btn-view { background: var(--secondary); color: white; flex: 2; }
         .btn-del { background: var(--accent); color: white; flex: 1; }
 
-        .flex-row { display: flex; gap: 10px; margin-top: 10px; }
+        .flex-row { display: flex; gap: 10px; }
 
+        /* Estilo para los Canales */
         .channel-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+            gap: 12px;
+            margin-top: 15px;
         }
 
         .channel-card {
             background: #1e293b;
-            padding: 15px;
-            border-radius: 12px;
-            border-bottom: 4px solid var(--primary);
-            transition: transform 0.2s;
+            padding: 12px;
+            border-radius: 10px;
+            border-left: 5px solid var(--secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .channel-card:focus {
-            outline: 4px solid white;
-            transform: scale(1.03);
-            background: #334155;
-        }
+        .channel-card:focus { outline: 3px solid var(--primary); background: #334155; }
 
         .channel-name {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 12px;
-            font-size: 1.1rem;
-            color: var(--primary);
+            font-weight: 600;
+            font-size: 1rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
         }
 
         .play-btn {
-            background: #10b981;
+            background: var(--success);
             color: white;
-            padding: 10px;
+            padding: 8px 15px;
             border-radius: 6px;
-            width: 100%;
             border: none;
             font-weight: bold;
             cursor: pointer;
         }
 
-        .empty-msg { text-align: center; color: #64748b; padding: 40px; }
+        .group-badge {
+            font-size: 0.7rem;
+            background: #475569;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #cbd5e1;
+            margin-top: 4px;
+            display: inline-block;
+        }
+
+        .empty-msg { text-align: center; color: #64748b; padding: 30px; font-style: italic; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1><i class="fas fa-bolt"></i> REPRODUCTOR M3U</h1>
+        <h1><i class="fas fa-play-circle"></i> REPRODUCTOR M3U</h1>
     </div>
 
-    <!-- SECCIÓN: CARGA -->
+    <!-- CARGA -->
     <div class="section-box">
-        <label><i class="fas fa-plus-circle"></i> Nueva Lista:</label>
-        <input type="text" id="listName" placeholder="Nombre de la lista (ej: Mi TV)">
+        <label><i class="fas fa-file-import"></i> 1. Cargar Nueva Lista:</label>
+        <input type="text" id="listName" placeholder="Nombre (ej: Deportes)">
         <button class="btn btn-main" onclick="document.getElementById('fileInput').click()">
-            <i class="fas fa-file-m3u"></i> CARGAR Y GUARDAR ARCHIVO
+            <i class="fas fa-cloud-upload-alt"></i> SELECCIONAR M3U
         </button>
         <input type="file" id="fileInput" accept=".m3u,.m3u8" style="display:none">
     </div>
 
-    <!-- SECCIÓN: SELECTOR -->
+    <!-- SELECCIÓN DE LISTA GUARDADA -->
     <div class="section-box">
-        <label><i class="fas fa-layer-group"></i> Mis Listas Guardadas:</label>
-        <select id="listsDropdown">
-            <option value="">-- Selecciona una lista --</option>
-        </select>
+        <label><i class="fas fa-database"></i> 2. Mis Listas:</label>
         <div class="flex-row">
-            <button class="btn btn-load" onclick="loadSelected()"><i class="fas fa-eye"></i> Visualizar</button>
-            <button class="btn btn-del" onclick="deleteCurrent()"><i class="fas fa-trash"></i></button>
+            <select id="listsDropdown" onchange="loadSelectedListGroups()">
+                <option value="">-- Selecciona --</option>
+            </select>
+            <button class="btn btn-del" onclick="deleteCurrentList()"><i class="fas fa-trash"></i></button>
         </div>
     </div>
 
+    <!-- FILTRO POR GRUPOS (DINÁMICO) -->
+    <div class="section-box" id="groupFilterSection" style="display:none">
+        <label><i class="fas fa-filter"></i> 3. Filtrar por Categoría:</label>
+        <select id="groupDropdown" onchange="filterByGroup()">
+            <option value="ALL">TODOS LOS CANALES</option>
+        </select>
+    </div>
+
     <div id="contentArea" class="channel-grid">
-        <div class="empty-msg">Carga un archivo M3U para empezar.</div>
+        <div class="empty-msg">Carga una lista para comenzar a ver.</div>
     </div>
 </div>
 
 <script>
-    const STORAGE_KEY = 'm3u_player_data';
+    const STORAGE_KEY = 'm3u_pro_vault';
+    let currentChannels = []; // Cache de la lista cargada actualmente
 
-    // Inicializar
-    window.onload = updateDropdown;
+    window.onload = refreshLists;
 
     document.getElementById('fileInput').onchange = function(e) {
         const file = e.target.files[0];
         if (!file) return;
-
         const name = document.getElementById('listName').value.trim() || file.name;
         const reader = new FileReader();
-        reader.onload = (event) => {
-            saveData(name, event.target.result);
-            processM3U(event.target.result);
+        reader.onload = (ev) => {
+            saveToStorage(name, ev.target.result);
+            parseM3U(ev.target.result);
         };
         reader.readAsText(file);
     };
 
-    function saveData(name, content) {
-        try {
-            let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-            data[name] = content;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            updateDropdown();
-            alert('¡Lista "' + name + '" guardada con éxito!');
-        } catch(e) {
-            alert('Error al guardar. Puede que la lista sea demasiado grande.');
-        }
-    }
+    function saveToStorage(name, content) {
+        let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        data[name] = content;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        refreshLists();
+        alert('Lista "' + name + '" guardada.');
+    </div>
 
-    function updateDropdown() {
-        const dropdown = document.getElementById('listsDropdown');
+    function refreshLists() {
+        const drop = document.getElementById('listsDropdown');
         const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-
-        dropdown.innerHTML = '<option value="">-- Selecciona una lista --</option>';
-        for (let name in data) {
-            let opt = document.createElement('option');
-            opt.value = name;
-            opt.textContent = name;
-            dropdown.appendChild(opt);
+        drop.innerHTML = '<option value="">-- Selecciona una lista --</option>';
+        for (let n in data) {
+            let o = document.createElement('option');
+            o.value = n; o.textContent = n;
+            drop.appendChild(o);
         }
     }
 
-    function loadSelected() {
-        const val = document.getElementById('listsDropdown').value;
-        const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-        if (val && data[val]) {
-            processM3U(data[val]);
-        }
-    }
-
-    function deleteCurrent() {
-        const val = document.getElementById('listsDropdown').value;
-        if (!val) return;
-        if (confirm('¿Eliminar la lista "' + val + '"?')) {
+    function deleteCurrentList() {
+        const name = document.getElementById('listsDropdown').value;
+        if (!name) return;
+        if (confirm('¿Borrar ' + name + '?')) {
             let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-            delete data[val];
+            delete data[name];
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            updateDropdown();
-            document.getElementById('contentArea').innerHTML = '<div class="empty-msg">Lista eliminada.</div>';
+            refreshLists();
+            location.reload();
         }
     }
 
-    function processM3U(content) {
+    function loadSelectedListGroups() {
+        const name = document.getElementById('listsDropdown').value;
+        const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        if (name && data[name]) {
+            parseM3U(data[name]);
+        }
+    }
+
+    function parseM3U(content) {
         const lines = content.split(/\r?\n/);
-        const channels = [];
-        let currentInfo = "";
+        currentChannels = [];
+        let groups = new Set();
+        let tempName = "";
+        let tempGroup = "Sin Categoría";
 
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i].trim();
             if (line.startsWith('#EXTINF')) {
-                currentInfo = line.split(',').pop();
-            } else if (line.length > 5 && !line.startsWith('#')) {
-                channels.push({
-                    name: currentInfo || "Canal sin nombre",
-                    url: line
-                });
-                currentInfo = "";
+                // Extraer nombre (después de la última coma)
+                tempName = line.split(',').pop() || "Canal";
+
+                // Extraer grupo (group-title="...")
+                const groupMatch = line.match(/group-title="([^"]+)"/i);
+                tempGroup = groupMatch ? groupMatch[1] : "Sin Categoría";
+                groups.add(tempGroup);
+            } else if (line.startsWith('http')) {
+                currentChannels.push({ name: tempName, group: tempGroup, url: line });
+                tempName = ""; tempGroup = "Sin Categoría";
             }
         }
 
-        render(channels);
+        // Actualizar Selector de Grupos
+        const gDrop = document.getElementById('groupDropdown');
+        gDrop.innerHTML = '<option value="ALL">-- TODOS LOS CANALES --</option>';
+        Array.from(groups).sort().forEach(g => {
+            let o = document.createElement('option');
+            o.value = g; o.textContent = g;
+            gDrop.appendChild(o);
+        });
+        document.getElementById('groupFilterSection').style.display = 'block';
+
+        renderChannels(currentChannels);
     }
 
-    function render(channels) {
+    function filterByGroup() {
+        const group = document.getElementById('groupDropdown').value;
+        if (group === 'ALL') {
+            renderChannels(currentChannels);
+        } else {
+            const filtered = currentChannels.filter(c => c.group === group);
+            renderChannels(filtered);
+        }
+    }
+
+    function renderChannels(channels) {
         const area = document.getElementById('contentArea');
         area.innerHTML = '';
-
         if (channels.length === 0) {
-            area.innerHTML = '<div class="empty-msg">No se encontraron enlaces de video válidos.</div>';
+            area.innerHTML = '<div class="empty-msg">No hay canales en esta sección.</div>';
             return;
         }
 
@@ -262,13 +290,21 @@
             card.className = 'channel-card';
             card.tabIndex = 0;
             card.innerHTML = `
-                <span class="channel-name">${c.name}</span>
-                <button class="play-btn" onclick="window.location.href='play://${c.url}'">
-                    <i class="fas fa-play"></i> REPRODUCIR
+                <div>
+                    <span class="channel-name">${c.name}</span><br>
+                    <span class="group-badge">${c.group}</span>
+                </div>
+                <button class="play-btn" onclick="playVideo('${c.url}')">
+                    <i class="fas fa-play"></i>
                 </button>
             `;
             area.appendChild(card);
         });
+    }
+
+    function playVideo(url) {
+        // Usamos un esquema personalizado que el Java interceptará
+        window.location.href = "vlc://" + url;
     }
 </script>
 
