@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>REPRODUCTOR M3U PRO</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         :root {
             --primary: #00f2ff;
@@ -21,11 +22,27 @@
             background: radial-gradient(circle at top, #1e1b4b, var(--bg));
             color: var(--text);
             margin: 0;
-            padding: 15px;
+            padding: 10px;
             min-height: 100vh;
         }
 
         .container { max-width: 900px; margin: 0 auto; }
+
+        /* Reproductor Flotante/Integrado */
+        #playerContainer {
+            width: 100%;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            display: none;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.8);
+        }
+
+        video { width: 100%; aspect-ratio: 16/9; display: block; }
 
         .header {
             text-align: center;
@@ -33,10 +50,9 @@
             background: linear-gradient(90deg, var(--secondary), var(--primary));
             border-radius: 12px;
             margin-bottom: 20px;
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
         }
 
-        .header h1 { margin: 0; font-size: 1.8rem; text-transform: uppercase; letter-spacing: 1px; }
+        .header h1 { margin: 0; font-size: 1.5rem; text-transform: uppercase; }
 
         .section-box {
             background: var(--card);
@@ -45,8 +61,6 @@
             border-radius: 12px;
             margin-bottom: 15px;
         }
-
-        label { font-weight: bold; color: var(--primary); display: block; margin-bottom: 5px; font-size: 0.9rem; }
 
         input, select {
             width: 100%;
@@ -57,7 +71,6 @@
             background: #0f172a;
             color: white;
             box-sizing: border-box;
-            font-size: 1rem;
         }
 
         .btn {
@@ -97,56 +110,39 @@
 
         .channel-card:focus { outline: 3px solid var(--primary); background: #334155; }
 
-        .channel-name {
-            font-weight: 600;
-            font-size: 1rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 180px;
-        }
+        .channel-info { flex: 1; overflow: hidden; margin-right: 10px; }
+        .channel-name { font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .play-btn {
-            background: var(--success);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 6px;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-        }
+        .btn-play { background: var(--success); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; }
+        .btn-external { background: var(--secondary); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; margin-left: 5px; }
 
-        .group-badge {
-            font-size: 0.75rem;
-            background: #475569;
-            padding: 2px 8px;
-            border-radius: 4px;
-            color: #cbd5e1;
-            margin-top: 5px;
-            display: inline-block;
-        }
-
-        .empty-msg { text-align: center; color: #64748b; padding: 30px; font-style: italic; }
+        .group-badge { font-size: 0.7rem; background: #475569; padding: 2px 6px; border-radius: 4px; color: #cbd5e1; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- Reproductor Integrado -->
+    <div id="playerContainer">
+        <video id="videoPlayer" controls></video>
+        <button class="btn" style="width:100%; border-radius:0; background:#334155; color:white;" onclick="closePlayer()">CERRAR REPRODUCTOR</button>
+    </div>
+
     <div class="header">
-        <h1><i class="fas fa-play-circle"></i> REPRODUCTOR M3U</h1>
+        <h1><i class="fas fa-bolt"></i> REPRODUCTOR M3U</h1>
     </div>
 
     <div class="section-box">
-        <label><i class="fas fa-file-import"></i> 1. Cargar Nueva Lista:</label>
-        <input type="text" id="listName" placeholder="Nombre (ej: Películas)">
+        <label>1. Nombre para la Nueva Lista:</label>
+        <input type="text" id="listName" placeholder="Ej: Mis Canales">
         <button class="btn btn-main" onclick="document.getElementById('fileInput').click()">
-            <i class="fas fa-plus"></i> SELECCIONAR Y GUARDAR
+            <i class="fas fa-plus"></i> SELECCIONAR Y AGREGAR
         </button>
         <input type="file" id="fileInput" accept=".m3u,.m3u8" style="display:none">
     </div>
 
     <div class="section-box">
-        <label><i class="fas fa-database"></i> 2. Mis Listas Guardadas:</label>
+        <label>2. Tus Listas:</label>
         <div class="flex-row">
             <select id="listsDropdown" onchange="loadSavedList()">
                 <option value="">-- Selecciona una lista --</option>
@@ -156,20 +152,21 @@
     </div>
 
     <div class="section-box" id="filterBox" style="display:none">
-        <label><i class="fas fa-filter"></i> 3. Categoría:</label>
+        <label>3. Filtrar Categoría:</label>
         <select id="groupDropdown" onchange="filterChannels()">
-            <option value="ALL">-- TODAS LAS CATEGORÍAS --</option>
+            <option value="ALL">-- TODAS --</option>
         </select>
     </div>
 
-    <div id="contentArea" class="channel-grid">
-        <div class="empty-msg">Carga una lista para comenzar.</div>
-    </div>
+    <div id="contentArea" class="channel-grid"></div>
 </div>
 
 <script>
-    const STORAGE_KEY = 'm3u_vault_v2';
+    const STORAGE_KEY = 'm3u_ultimate_storage';
     let allChannels = [];
+    const video = document.getElementById('videoPlayer');
+    const playerContainer = document.getElementById('playerContainer');
+    let hls = null;
 
     window.onload = refreshDropdown;
 
@@ -181,6 +178,7 @@
         reader.onload = (ev) => {
             saveList(name, ev.target.result);
             parseM3U(ev.target.result);
+            document.getElementById('listName').value = ""; // Limpiar para la próxima
         };
         reader.readAsText(file);
     };
@@ -188,12 +186,12 @@
     function saveList(name, content) {
         try {
             let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-            data[name] = content;
+            data[name] = content; // Aquí agregamos al objeto existente, no sobrescribimos
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             refreshDropdown();
-            alert('Lista "' + name + '" guardada correctamente.');
+            alert('Lista "' + name + '" guardada.');
         } catch(e) {
-            alert('Error: La lista es muy grande para la memoria interna.');
+            alert('Error al guardar. LocalStorage lleno o archivo corrupto.');
         }
     }
 
@@ -219,11 +217,12 @@
     function deleteList() {
         const name = document.getElementById('listsDropdown').value;
         if (!name) return;
-        if (confirm('¿Borrar ' + name + '?')) {
+        if (confirm('¿Eliminar ' + name + '?')) {
             let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
             delete data[name];
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            location.reload();
+            refreshDropdown();
+            document.getElementById('contentArea').innerHTML = '';
         }
     }
 
@@ -232,19 +231,17 @@
         allChannels = [];
         let groups = new Set();
         let currentName = "";
-        let currentGroup = "Sin Categoría";
+        let currentGroup = "General";
 
         lines.forEach(line => {
             line = line.trim();
             if (line.startsWith('#EXTINF')) {
-                const namePart = line.split(',').pop();
-                currentName = namePart || "Canal";
+                currentName = line.split(',').pop() || "Canal";
                 const groupMatch = line.match(/group-title="([^"]+)"/i);
-                currentGroup = groupMatch ? groupMatch[1] : "Sin Categoría";
+                currentGroup = groupMatch ? groupMatch[1] : "General";
                 groups.add(currentGroup);
             } else if (line.startsWith('http')) {
                 allChannels.push({ name: currentName, group: currentGroup, url: line });
-                currentName = ""; currentGroup = "Sin Categoría";
             }
         });
 
@@ -273,16 +270,43 @@
             div.className = 'channel-card';
             div.tabIndex = 0;
             div.innerHTML = `
-                <div>
-                    <span class="channel-name">${c.name}</span><br>
+                <div class="channel-info">
+                    <span class="channel-name">${c.name}</span>
                     <span class="group-badge">${c.group}</span>
                 </div>
-                <button class="play-btn" onclick="window.location.href='vlc://${c.url}'">
-                    <i class="fas fa-play"></i>
-                </button>
+                <div style="display:flex">
+                    <button class="btn-play" onclick="playInApp('${c.url}')"><i class="fas fa-play"></i></button>
+                    <button class="btn-external" onclick="playExternal('${c.url}')"><i class="fas fa-external-link-alt"></i></button>
+                </div>
             `;
             area.appendChild(div);
         });
+    }
+
+    function playInApp(url) {
+        playerContainer.style.display = 'block';
+        window.scrollTo(0,0);
+
+        if (Hls.isSupported()) {
+            if (hls) hls.destroy();
+            hls = new Hls();
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = url;
+            video.addEventListener('loadedmetadata', () => video.play());
+        }
+    }
+
+    function closePlayer() {
+        video.pause();
+        playerContainer.style.display = 'none';
+        if (hls) hls.destroy();
+    }
+
+    function playExternal(url) {
+        window.location.href = "vlc://" + url;
     }
 </script>
 </body>
