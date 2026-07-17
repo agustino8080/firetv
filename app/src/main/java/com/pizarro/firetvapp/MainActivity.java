@@ -28,37 +28,36 @@ public class MainActivity extends Activity {
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
         
-        // Persistencia para que no se borren las listas al cerrar
+        // --- CORRECCIÓN CRÍTICA PARA GUARDADO LOCAL ---
         webSettings.setDatabaseEnabled(true);
-        webSettings.setDomStorageEnabled(true);
-        
         webSettings.setAllowFileAccess(true);
         webSettings.setAllowContentAccess(true);
+        webSettings.setAllowFileAccessFromFileURLs(true);
+        webSettings.setAllowUniversalAccessFromFileURLs(true);
+        
+        // Optimización visual
         webSettings.setUseWideViewPort(true);
         webSettings.setLoadWithOverviewMode(true);
+        webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 
         myWebView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                // --- Lógica de REPRODUCCIÓN MEJORADA ---
                 if (url.startsWith("vlc://")) {
                     String cleanUrl = url.replace("vlc://", "");
-                    
-                    // Intentamos abrir específicamente con VLC primero
-                    Intent vlcIntent = new Intent(Intent.ACTION_VIEW);
-                    vlcIntent.setDataAndType(Uri.parse(cleanUrl), "video/*");
-                    vlcIntent.setPackage("org.videolan.vlc"); // Paquete oficial de VLC
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setDataAndType(Uri.parse(cleanUrl), "video/*");
+                    intent.setPackage("org.videolan.vlc"); 
 
                     try {
-                        startActivity(vlcIntent);
+                        startActivity(intent);
                     } catch (Exception e) {
-                        // Si falla VLC, probamos con cualquier reproductor disponible
                         Intent genericIntent = new Intent(Intent.ACTION_VIEW);
                         genericIntent.setDataAndType(Uri.parse(cleanUrl), "video/*");
                         try {
-                            startActivity(Intent.createChooser(genericIntent, "Elige un reproductor de video"));
+                            startActivity(Intent.createChooser(genericIntent, "Elige un reproductor"));
                         } catch (Exception ex) {
-                            Toast.makeText(MainActivity.this, "No tienes ningún reproductor instalado", Toast.LENGTH_LONG).show();
+                            Toast.makeText(MainActivity.this, "Necesitas un reproductor de video", Toast.LENGTH_LONG).show();
                         }
                     }
                     return true;
@@ -87,9 +86,22 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if (requestCode == FILECHOOSER_RESULTCODE) {
             if (uploadMessage == null) return;
-            Uri result = intent == null || resultCode != RESULT_OK ? null : intent.getData();
-            uploadMessage.onReceiveValue(result != null ? new Uri[]{result} : null);
+            Uri result = (intent == null || resultCode != RESULT_OK) ? null : intent.getData();
+            if (result != null) {
+                uploadMessage.onReceiveValue(new Uri[]{result});
+            } else {
+                uploadMessage.onReceiveValue(null);
+            }
             uploadMessage = null;
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (myWebView.canGoBack()) {
+            myWebView.goBack();
+        } else {
+            super.onBackPressed();
         }
     }
 }

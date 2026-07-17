@@ -71,17 +71,13 @@
             justify-content: center;
             gap: 8px;
             text-transform: uppercase;
-            transition: transform 0.1s;
         }
-        .btn:active { transform: scale(0.98); }
 
         .btn-main { background: var(--primary); color: #000; width: 100%; }
-        .btn-view { background: var(--secondary); color: white; flex: 2; }
         .btn-del { background: var(--accent); color: white; flex: 1; }
 
         .flex-row { display: flex; gap: 10px; }
 
-        /* Estilo para los Canales */
         .channel-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -113,7 +109,7 @@
         .play-btn {
             background: var(--success);
             color: white;
-            padding: 8px 15px;
+            padding: 10px 20px;
             border-radius: 6px;
             border: none;
             font-weight: bold;
@@ -121,12 +117,12 @@
         }
 
         .group-badge {
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             background: #475569;
-            padding: 2px 6px;
+            padding: 2px 8px;
             border-radius: 4px;
             color: #cbd5e1;
-            margin-top: 4px;
+            margin-top: 5px;
             display: inline-block;
         }
 
@@ -140,45 +136,42 @@
         <h1><i class="fas fa-play-circle"></i> REPRODUCTOR M3U</h1>
     </div>
 
-    <!-- CARGA -->
     <div class="section-box">
         <label><i class="fas fa-file-import"></i> 1. Cargar Nueva Lista:</label>
-        <input type="text" id="listName" placeholder="Nombre (ej: Deportes)">
+        <input type="text" id="listName" placeholder="Nombre (ej: Películas)">
         <button class="btn btn-main" onclick="document.getElementById('fileInput').click()">
-            <i class="fas fa-cloud-upload-alt"></i> SELECCIONAR M3U
+            <i class="fas fa-plus"></i> SELECCIONAR Y GUARDAR
         </button>
         <input type="file" id="fileInput" accept=".m3u,.m3u8" style="display:none">
     </div>
 
-    <!-- SELECCIÓN DE LISTA GUARDADA -->
     <div class="section-box">
-        <label><i class="fas fa-database"></i> 2. Mis Listas:</label>
+        <label><i class="fas fa-database"></i> 2. Mis Listas Guardadas:</label>
         <div class="flex-row">
-            <select id="listsDropdown" onchange="loadSelectedListGroups()">
-                <option value="">-- Selecciona --</option>
+            <select id="listsDropdown" onchange="loadSavedList()">
+                <option value="">-- Selecciona una lista --</option>
             </select>
-            <button class="btn btn-del" onclick="deleteCurrentList()"><i class="fas fa-trash"></i></button>
+            <button class="btn btn-del" onclick="deleteList()"><i class="fas fa-trash"></i></button>
         </div>
     </div>
 
-    <!-- FILTRO POR GRUPOS (DINÁMICO) -->
-    <div class="section-box" id="groupFilterSection" style="display:none">
-        <label><i class="fas fa-filter"></i> 3. Filtrar por Categoría:</label>
-        <select id="groupDropdown" onchange="filterByGroup()">
-            <option value="ALL">TODOS LOS CANALES</option>
+    <div class="section-box" id="filterBox" style="display:none">
+        <label><i class="fas fa-filter"></i> 3. Categoría:</label>
+        <select id="groupDropdown" onchange="filterChannels()">
+            <option value="ALL">-- TODAS LAS CATEGORÍAS --</option>
         </select>
     </div>
 
     <div id="contentArea" class="channel-grid">
-        <div class="empty-msg">Carga una lista para comenzar a ver.</div>
+        <div class="empty-msg">Carga una lista para comenzar.</div>
     </div>
 </div>
 
 <script>
-    const STORAGE_KEY = 'm3u_pro_vault';
-    let currentChannels = []; // Cache de la lista cargada actualmente
+    const STORAGE_KEY = 'm3u_vault_v2';
+    let allChannels = [];
 
-    window.onload = refreshLists;
+    window.onload = refreshDropdown;
 
     document.getElementById('fileInput').onchange = function(e) {
         const file = e.target.files[0];
@@ -186,21 +179,25 @@
         const name = document.getElementById('listName').value.trim() || file.name;
         const reader = new FileReader();
         reader.onload = (ev) => {
-            saveToStorage(name, ev.target.result);
+            saveList(name, ev.target.result);
             parseM3U(ev.target.result);
         };
         reader.readAsText(file);
     };
 
-    function saveToStorage(name, content) {
-        let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-        data[name] = content;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        refreshLists();
-        alert('Lista "' + name + '" guardada.');
-    </div>
+    function saveList(name, content) {
+        try {
+            let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            data[name] = content;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            refreshDropdown();
+            alert('Lista "' + name + '" guardada correctamente.');
+        } catch(e) {
+            alert('Error: La lista es muy grande para la memoria interna.');
+        }
+    }
 
-    function refreshLists() {
+    function refreshDropdown() {
         const drop = document.getElementById('listsDropdown');
         const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
         drop.innerHTML = '<option value="">-- Selecciona una lista --</option>';
@@ -211,19 +208,7 @@
         }
     }
 
-    function deleteCurrentList() {
-        const name = document.getElementById('listsDropdown').value;
-        if (!name) return;
-        if (confirm('¿Borrar ' + name + '?')) {
-            let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-            delete data[name];
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            refreshLists();
-            location.reload();
-        }
-    }
-
-    function loadSelectedListGroups() {
+    function loadSavedList() {
         const name = document.getElementById('listsDropdown').value;
         const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
         if (name && data[name]) {
@@ -231,82 +216,74 @@
         }
     }
 
+    function deleteList() {
+        const name = document.getElementById('listsDropdown').value;
+        if (!name) return;
+        if (confirm('¿Borrar ' + name + '?')) {
+            let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            delete data[name];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            location.reload();
+        }
+    }
+
     function parseM3U(content) {
         const lines = content.split(/\r?\n/);
-        currentChannels = [];
+        allChannels = [];
         let groups = new Set();
-        let tempName = "";
-        let tempGroup = "Sin Categoría";
+        let currentName = "";
+        let currentGroup = "Sin Categoría";
 
-        for (let i = 0; i < lines.length; i++) {
-            let line = lines[i].trim();
+        lines.forEach(line => {
+            line = line.trim();
             if (line.startsWith('#EXTINF')) {
-                // Extraer nombre (después de la última coma)
-                tempName = line.split(',').pop() || "Canal";
-
-                // Extraer grupo (group-title="...")
+                const namePart = line.split(',').pop();
+                currentName = namePart || "Canal";
                 const groupMatch = line.match(/group-title="([^"]+)"/i);
-                tempGroup = groupMatch ? groupMatch[1] : "Sin Categoría";
-                groups.add(tempGroup);
+                currentGroup = groupMatch ? groupMatch[1] : "Sin Categoría";
+                groups.add(currentGroup);
             } else if (line.startsWith('http')) {
-                currentChannels.push({ name: tempName, group: tempGroup, url: line });
-                tempName = ""; tempGroup = "Sin Categoría";
+                allChannels.push({ name: currentName, group: currentGroup, url: line });
+                currentName = ""; currentGroup = "Sin Categoría";
             }
-        }
+        });
 
-        // Actualizar Selector de Grupos
         const gDrop = document.getElementById('groupDropdown');
-        gDrop.innerHTML = '<option value="ALL">-- TODOS LOS CANALES --</option>';
+        gDrop.innerHTML = '<option value="ALL">-- TODAS LAS CATEGORÍAS --</option>';
         Array.from(groups).sort().forEach(g => {
             let o = document.createElement('option');
             o.value = g; o.textContent = g;
             gDrop.appendChild(o);
         });
-        document.getElementById('groupFilterSection').style.display = 'block';
-
-        renderChannels(currentChannels);
+        document.getElementById('filterBox').style.display = 'block';
+        render(allChannels);
     }
 
-    function filterByGroup() {
+    function filterChannels() {
         const group = document.getElementById('groupDropdown').value;
-        if (group === 'ALL') {
-            renderChannels(currentChannels);
-        } else {
-            const filtered = currentChannels.filter(c => c.group === group);
-            renderChannels(filtered);
-        }
+        const filtered = (group === 'ALL') ? allChannels : allChannels.filter(c => c.group === group);
+        render(filtered);
     }
 
-    function renderChannels(channels) {
+    function render(list) {
         const area = document.getElementById('contentArea');
         area.innerHTML = '';
-        if (channels.length === 0) {
-            area.innerHTML = '<div class="empty-msg">No hay canales en esta sección.</div>';
-            return;
-        }
-
-        channels.forEach(c => {
-            const card = document.createElement('div');
-            card.className = 'channel-card';
-            card.tabIndex = 0;
-            card.innerHTML = `
+        list.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'channel-card';
+            div.tabIndex = 0;
+            div.innerHTML = `
                 <div>
                     <span class="channel-name">${c.name}</span><br>
                     <span class="group-badge">${c.group}</span>
                 </div>
-                <button class="play-btn" onclick="playVideo('${c.url}')">
+                <button class="play-btn" onclick="window.location.href='vlc://${c.url}'">
                     <i class="fas fa-play"></i>
                 </button>
             `;
-            area.appendChild(card);
+            area.appendChild(div);
         });
     }
-
-    function playVideo(url) {
-        // Usamos un esquema personalizado que el Java interceptará
-        window.location.href = "vlc://" + url;
-    }
 </script>
-
 </body>
 </html>
