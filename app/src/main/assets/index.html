@@ -28,7 +28,6 @@
 
         .container { max-width: 900px; margin: 0 auto; }
 
-        /* Reproductor Flotante/Integrado */
         #playerContainer {
             width: 100%;
             background: #000;
@@ -40,9 +39,10 @@
             top: 0;
             z-index: 1000;
             box-shadow: 0 5px 25px rgba(0,0,0,0.8);
+            border: 2px solid var(--primary);
         }
 
-        video { width: 100%; aspect-ratio: 16/9; display: block; }
+        video { width: 100%; aspect-ratio: 16/9; display: block; background: #000; }
 
         .header {
             text-align: center;
@@ -122,39 +122,42 @@
 <body>
 
 <div class="container">
-    <!-- Reproductor Integrado -->
+    <!-- Reproductor Integrado Universal -->
     <div id="playerContainer">
-        <video id="videoPlayer" controls></video>
-        <button class="btn" style="width:100%; border-radius:0; background:#334155; color:white;" onclick="closePlayer()">CERRAR REPRODUCTOR</button>
+        <video id="videoPlayer" controls playsinline></video>
+        <div style="display:flex;">
+            <button class="btn" style="flex:1; border-radius:0; background:#334155; color:white;" onclick="closePlayer()">CERRAR</button>
+            <button class="btn" style="flex:1; border-radius:0; background:var(--secondary); color:white;" id="btnExpand">PANTALLA COMPLETA</button>
+        </div>
     </div>
 
     <div class="header">
-        <h1><i class="fas fa-bolt"></i> REPRODUCTOR M3U</h1>
+        <h1><i class="fas fa-play-circle"></i> REPRODUCTOR M3U</h1>
     </div>
 
     <div class="section-box">
-        <label>1. Nombre para la Nueva Lista:</label>
-        <input type="text" id="listName" placeholder="Ej: Mis Canales">
+        <label>1. Nombre y Carga de Lista:</label>
+        <input type="text" id="listName" placeholder="Nombre de lista...">
         <button class="btn btn-main" onclick="document.getElementById('fileInput').click()">
-            <i class="fas fa-plus"></i> SELECCIONAR Y AGREGAR
+            <i class="fas fa-plus"></i> CARGAR Y GUARDAR
         </button>
         <input type="file" id="fileInput" accept=".m3u,.m3u8" style="display:none">
     </div>
 
     <div class="section-box">
-        <label>2. Tus Listas:</label>
+        <label>2. Tus Listas Guardadas:</label>
         <div class="flex-row">
             <select id="listsDropdown" onchange="loadSavedList()">
-                <option value="">-- Selecciona una lista --</option>
+                <option value="">-- Selecciona --</option>
             </select>
             <button class="btn btn-del" onclick="deleteList()"><i class="fas fa-trash"></i></button>
         </div>
     </div>
 
     <div class="section-box" id="filterBox" style="display:none">
-        <label>3. Filtrar Categoría:</label>
+        <label>3. Categoría de Canales:</label>
         <select id="groupDropdown" onchange="filterChannels()">
-            <option value="ALL">-- TODAS --</option>
+            <option value="ALL">-- TODAS LAS CATEGORÍAS --</option>
         </select>
     </div>
 
@@ -162,7 +165,7 @@
 </div>
 
 <script>
-    const STORAGE_KEY = 'm3u_ultimate_storage';
+    const STORAGE_KEY = 'm3u_super_vault_v3';
     let allChannels = [];
     const video = document.getElementById('videoPlayer');
     const playerContainer = document.getElementById('playerContainer');
@@ -178,7 +181,7 @@
         reader.onload = (ev) => {
             saveList(name, ev.target.result);
             parseM3U(ev.target.result);
-            document.getElementById('listName').value = ""; // Limpiar para la próxima
+            document.getElementById('listName').value = "";
         };
         reader.readAsText(file);
     };
@@ -186,13 +189,11 @@
     function saveList(name, content) {
         try {
             let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-            data[name] = content; // Aquí agregamos al objeto existente, no sobrescribimos
+            data[name] = content;
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             refreshDropdown();
-            alert('Lista "' + name + '" guardada.');
-        } catch(e) {
-            alert('Error al guardar. LocalStorage lleno o archivo corrupto.');
-        }
+            alert('¡Lista "' + name + '" guardada!');
+        } catch(e) { alert('Error: Lista demasiado grande.'); }
     }
 
     function refreshDropdown() {
@@ -209,9 +210,7 @@
     function loadSavedList() {
         const name = document.getElementById('listsDropdown').value;
         const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-        if (name && data[name]) {
-            parseM3U(data[name]);
-        }
+        if (name && data[name]) parseM3U(data[name]);
     }
 
     function deleteList() {
@@ -241,12 +240,14 @@
                 currentGroup = groupMatch ? groupMatch[1] : "General";
                 groups.add(currentGroup);
             } else if (line.startsWith('http')) {
+                // Lógica Xtream: Si no tiene extensión, suele ser un stream directo.
+                // Intentamos procesarlo tal cual, pero en Java le daremos soporte extra.
                 allChannels.push({ name: currentName, group: currentGroup, url: line });
             }
         });
 
         const gDrop = document.getElementById('groupDropdown');
-        gDrop.innerHTML = '<option value="ALL">-- TODAS LAS CATEGORÍAS --</option>';
+        gDrop.innerHTML = '<option value="ALL">-- TODOS --</option>';
         Array.from(groups).sort().forEach(g => {
             let o = document.createElement('option');
             o.value = g; o.textContent = g;
@@ -275,7 +276,7 @@
                     <span class="group-badge">${c.group}</span>
                 </div>
                 <div style="display:flex">
-                    <button class="btn-play" onclick="playInApp('${c.url}')"><i class="fas fa-play"></i></button>
+                    <button class="btn-play" onclick="playUniversal('${c.url}')"><i class="fas fa-play"></i></button>
                     <button class="btn-external" onclick="playExternal('${c.url}')"><i class="fas fa-external-link-alt"></i></button>
                 </div>
             `;
@@ -283,19 +284,33 @@
         });
     }
 
-    function playInApp(url) {
+    function playUniversal(url) {
         playerContainer.style.display = 'block';
         window.scrollTo(0,0);
 
-        if (Hls.isSupported()) {
-            if (hls) hls.destroy();
-            hls = new Hls();
-            hls.loadSource(url);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Reiniciar video
+        video.pause();
+        video.src = "";
+        if (hls) { hls.destroy(); hls = null; }
+
+        // DETECCIÓN DE FORMATO
+        if (url.includes('.m3u8')) {
+            if (Hls.isSupported()) {
+                hls = new Hls();
+                hls.loadSource(url);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(e => console.log("Auto-play blocked")));
+            } else {
+                video.src = url;
+                video.play();
+            }
+        } else {
+            // MP4, Xtream, TS, etc. (Uso del motor nativo del sistema)
             video.src = url;
-            video.addEventListener('loadedmetadata', () => video.play());
+            video.type = "video/mp4"; // Intento genérico
+            video.play().catch(e => {
+                alert("Este formato requiere reproductor externo (Botón Morado).");
+            });
         }
     }
 
@@ -306,8 +321,15 @@
     }
 
     function playExternal(url) {
+        // La lógica Java decidirá si añadir .ts para Xtream
         window.location.href = "vlc://" + url;
     }
+
+    document.getElementById('btnExpand').onclick = () => {
+        if (video.requestFullscreen) video.requestFullscreen();
+        else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen();
+        else if (video.msRequestFullscreen) video.msRequestFullscreen();
+    };
 </script>
 </body>
 </html>

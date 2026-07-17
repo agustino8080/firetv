@@ -27,15 +27,14 @@ public class MainActivity extends Activity {
         WebSettings webSettings = myWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
-        
-        // --- CORRECCIÓN CRÍTICA PARA GUARDADO LOCAL ---
         webSettings.setDatabaseEnabled(true);
+        
+        // Habilitar multimedia y archivos
         webSettings.setAllowFileAccess(true);
         webSettings.setAllowContentAccess(true);
-        webSettings.setAllowFileAccessFromFileURLs(true);
-        webSettings.setAllowUniversalAccessFromFileURLs(true);
+        webSettings.setMediaPlaybackRequiresUserGesture(false); // Autoplay permitido
         
-        // Optimización visual
+        // Persistencia y visualización
         webSettings.setUseWideViewPort(true);
         webSettings.setLoadWithOverviewMode(true);
         webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
@@ -45,20 +44,25 @@ public class MainActivity extends Activity {
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 if (url.startsWith("vlc://")) {
                     String cleanUrl = url.replace("vlc://", "");
+                    
+                    // --- LÓGICA XTREAM ---
+                    // Si el link no tiene extensión, suele ser Xtream Codes. Le añadimos .ts para mayor compatibilidad
+                    if (!cleanUrl.contains(".") || cleanUrl.endsWith("/")) {
+                        cleanUrl = cleanUrl + ".ts";
+                    }
+
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     intent.setDataAndType(Uri.parse(cleanUrl), "video/*");
-                    intent.setPackage("org.videolan.vlc"); 
-
+                    
+                    // Intentamos forzar VLC, pero sin fallar si no existe
                     try {
+                        intent.setPackage("org.videolan.vlc");
                         startActivity(intent);
                     } catch (Exception e) {
-                        Intent genericIntent = new Intent(Intent.ACTION_VIEW);
-                        genericIntent.setDataAndType(Uri.parse(cleanUrl), "video/*");
-                        try {
-                            startActivity(Intent.createChooser(genericIntent, "Elige un reproductor"));
-                        } catch (Exception ex) {
-                            Toast.makeText(MainActivity.this, "Necesitas un reproductor de video", Toast.LENGTH_LONG).show();
-                        }
+                        // Si no hay VLC, abrimos el selector de Android universal
+                        Intent chooser = Intent.createChooser(new Intent(Intent.ACTION_VIEW)
+                                .setDataAndType(Uri.parse(cleanUrl), "video/*"), "Reproducir con...");
+                        startActivity(chooser);
                     }
                     return true;
                 }
@@ -87,11 +91,7 @@ public class MainActivity extends Activity {
         if (requestCode == FILECHOOSER_RESULTCODE) {
             if (uploadMessage == null) return;
             Uri result = (intent == null || resultCode != RESULT_OK) ? null : intent.getData();
-            if (result != null) {
-                uploadMessage.onReceiveValue(new Uri[]{result});
-            } else {
-                uploadMessage.onReceiveValue(null);
-            }
+            uploadMessage.onReceiveValue(result != null ? new Uri[]{result} : null);
             uploadMessage = null;
         }
     }
